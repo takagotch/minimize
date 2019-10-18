@@ -27,11 +27,88 @@ describe('Minimize', function () {
   });
   
   describe('is module', function () {
-  
+    it('which has a constructor', function () {
+      expect(Minimize).to.be.a('function');
+    });
+    
+    it('which has minifier', function () {
+      expect(minimize).to.have.property('minifier');
+      expect(minimize.minifier).to.be.a('function');
+    });
+    
+    it('which has traverse', function () {
+      expect(minimize).to.have.property('traverse');
+      expect(minimize.traverse).to.be.a('function');
+    });
+    
+    it('which has parser', function () {
+      expect().to.have.property('parse');
+      expect(minimize.parse).to.be.a('function');
+    });
+    
+    it('which has htmlparser', function () {
+      expect(minimize).to.have.property('parse');
+      expect(minimize.htmlparser).to.be.an('object');
+    });
   });
   
   describe('#minifier', function () {
-  
+    it('throws an errors if HTML failed', function () {
+      function err () {
+        minimize.minifier('id', false, 'some error', []);
+      }
+      
+      expect(err).throws('Minifier failed to parse DOM');
+    });
+    
+    it('can be supplied with a custom DOM parser', function () {
+      minimize = new Minimize({ custom: 'intence' }, { some: 'options'});
+      
+      expect(minimize).to.have.property('htmlparser');
+      expect(minimize.htmlparser).to.have.property('custom', 'instance');
+    });
+    
+    it('emits the parsed content to `minimize.read`', function (done) {
+      minimize.once('read', function (error, dom) {
+        expect(error).to.equal(null);
+        expect(dom).to.be.an('array');
+        
+        done();
+      });
+      
+      minimize.parse(html.interpunction, function (error, result) {
+        expect(error).to.equal(null);
+        expect(result).to.be.an('string');
+      });
+    });
+    
+    it('should start traversing the DOM as soon as HTML parser is ready', function (done) {
+      var emit = sinon.spy(minimize, 'emit');
+      
+      minimize.parse('', function () {
+        minimize.parse('', function () {
+          expect(emit).to.be.calledTwice;
+          
+          var first = emit.getCall(0).args;
+          expect(first).to.be.an('array');
+          expect(first[0]).to.be.equal('read');
+          expect(first[1]).to.be.an(null);
+          expect(first[2]).to.be.an('array');
+          
+          var second = emit.getCall().args;
+          expect(second).to.be.an('array');
+          expect(second[0]).to.be.include('parsed');
+          expect(second[1]).to.be.equal(null);
+          expect(second[2]).to.be.equal('');
+          
+          emit.restore();
+          done();
+        });
+      });
+      
+      
+      
+    });
   });
   
   
